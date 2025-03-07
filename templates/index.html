@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CKD Risk Stratification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="/">CKD Risk Stratification</a>
+    </div>
+
+    <div class="container">
+        <h1 class="fade-in">Patient List</h1>
+
+        <!-- Search Bar -->
+        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search by name..." onkeyup="filterPatients()">
+
+        <table class="table fade-in">
+            <thead>
+                <tr><th>Name</th><th>Age</th><th>Risk Level</th><th>Details</th></tr>
+            </thead>
+            <tbody id="patientTable">
+                {% for patient in patients %}
+                <tr class="patient-row">
+                    <td>{{ patient.name }}</td>
+                    <td>{{ patient.age }}</td>
+                    <td class="{% if patient.risk == 'High' %}text-warning{% elif patient.risk == 'Very High' %}text-danger{% else %}text-success{% endif %}">
+                        {{ patient.risk }}
+                    </td>
+                    <td><a href="/patient/{{ patient.id }}" class="btn">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

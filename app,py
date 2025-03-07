@@ -1,0 +1,91 @@
+from flask import Flask, render_template, request, jsonify
+import openai  # ChatGPT API
+from datetime import datetime, timedelta
+
+app = Flask(__name__)
+
+# Mock API Key (Replace with your actual API key)
+openai.api_key = "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"
+
+# Mock Patient Data
+patients = {
+    1: {
+        "name": "John Doe",
+        "age": 58,
+        "eGFR_trend": [85, 76, 65, 54, 45, 30],  
+        "UACR_trend": [10, 15, 30, 80, 120, 250],  
+        "medications": ["Losartan", "Metformin", "Furosemide"],
+        "transplant": False,
+        "visit_dates": [datetime.today() - timedelta(days=i * 180) for i in range(6)],
+    },
+    2: {
+        "name": "Emily Carter",
+        "age": 45,
+        "eGFR_trend": [95, 90, 85, 82, 78, 75],  
+        "UACR_trend": [5, 7, 10, 15, 18, 20],  
+        "medications": ["Amlodipine", "Atorvastatin"],
+        "transplant": False,
+        "visit_dates": [datetime.today() - timedelta(days=i * 365) for i in range(4)],
+    },
+    3: {
+        "name": "Michael Brown",
+        "age": 63,
+        "eGFR_trend": [50, 48, 45, 42, 35, 28],  
+        "UACR_trend": [60, 75, 85, 100, 150, 220],  
+        "medications": ["Lisinopril", "Hydrochlorothiazide", "Insulin"],
+        "transplant": True,
+        "visit_dates": [datetime.today() - timedelta(days=i * 90) for i in range(8)],
+    }
+}
+
+@app.route("/")
+def index():
+    for patient in patients.values():
+        # Mock a basic risk level based on eGFR
+        patient["risk"] = "High" if min(patient["eGFR_trend"]) < 50 else "Low"
+    return render_template("index.html", patients=patients.values())
+
+
+@app.route("/patient/<int:id>")
+def patient_details(id):
+    patient = patients.get(id)
+    if not patient:
+        return render_template("404.html"), 404  # ✅ Show a proper error page
+    return render_template("patient.html", patient=patient, patient_id=id)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204  # ✅ This tells the browser the favicon is not needed
+
+@app.route("/chat/<int:patient_id>", methods=["POST"])
+def chat(patient_id):
+    user_input = request.json.get("message", "")
+    patient = patients.get(patient_id)
+
+    if not patient:
+        return jsonify({"response": "Error: Patient data not found."})
+
+    # Generate patient-specific context
+    patient_context = f"""
+    Patient Name: {patient['name']}
+    Age: {patient['age']}
+    Kidney Function (eGFR trend): {patient['eGFR_trend']}
+    Proteinuria (UACR trend): {patient['UACR_trend']}
+    Medications: {", ".join(patient['medications'])}
+    Transplant Status: {"Has received a transplant" if patient['transplant'] else "No transplant"}
+    """
+
+    # ChatGPT API call with patient context
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are an AI medical assistant specialized in nephrology, helping doctors analyze kidney disease progression and lab reports."},
+            {"role": "user", "content": f"Patient Data:\n{patient_context}\n\nDoctor's question: {user_input}"}
+        ]
+    )
+    
+    return jsonify({"response": response["choices"][0]["message"]["content"]})
+
+if __name__ == "__main__":
+    app.run(debug=True)

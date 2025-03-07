@@ -1,0 +1,138 @@
+/* IKEM Color Scheme */
+:root {
+    --primary-red: #b71c1c; /* Deep Red */
+    --secondary-red: #d32f2f;
+    --background-white: #ffffff;
+    --text-dark: #222;
+    --text-light: #f5f5f5;
+    --gray-border: #ddd;
+}
+
+/* Global Reset */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: var(--background-white);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+}
+
+/* NAVBAR */
+.navbar {
+    background-color: var(--primary-red);
+    padding: 15px 20px;
+    text-align: center;
+}
+
+.navbar a {
+    color: var(--text-light);
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+}
+
+.navbar a:hover {
+    color: var(--secondary-red);
+}
+
+/* Main Container */
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+/* Headings */
+h1, h2, h3 {
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* Table (Matches IKEM Style) */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+}
+
+.table th {
+    background-color: var(--primary-red);
+    color: var(--text-light);
+    padding: 15px;
+    text-align: left;
+    font-size: 18px;
+    border-bottom: 3px solid var(--gray-border);
+}
+
+.table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--gray-border);
+    font-size: 16px;
+}
+
+.table tr:hover {
+    background-color: rgba(183, 28, 28, 0.1);
+    transition: background 0.3s ease-in-out;
+}
+
+/* Buttons (Matches IKEM Style) */
+.btn {
+    padding: 12px 18px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+    font-size: 16px;
+}
+
+.btn-primary {
+    background-color: var(--primary-red);
+    color: var(--text-light);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-red);
+}
+
+/* ALERT BOX */
+.alert-box {
+    padding: 15px;
+    background-color: var(--secondary-red);
+    color: var(--text-light);
+    font-weight: bold;
+    border-radius: 5px;
+    margin: 10px 0;
+    font-size: 16px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+/* Search Bar */
+.search-bar {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin-bottom: 20px;
+    border: 1px solid var(--gray-border);
+    border-radius: 5px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.search-bar:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0px 0px 5px rgba(183, 28, 28, 0.5);
+}
+

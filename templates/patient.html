@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Analysis - {{ patient.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- ✅ Add Chart.js before script.js -->
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+    
+    
+<body>
+
+    <div class="navbar">
+        <a href="/">Back to Patients</a>
+    </div>
+
+    <div class="container fade-in">
+        <h1>{{ patient.name }}</h1>
+        <p><strong>Age:</strong> {{ patient.age }}</p>
+
+        <!-- Kidney Function Graph -->
+        <h2>Kidney Function Over Time (eGFR)</h2>
+        <canvas id="eGFRChart"></canvas>
+
+        <!-- UACR Trend -->
+        <h2>Proteinuria (UACR) Levels</h2>
+        <canvas id="UACRChart"></canvas>
+
+        <!-- Medications -->
+        <h2>Medications</h2>
+        <ul>
+            {% for med in patient.medications %}
+                <li class="alert-box">💊 {{ med }}</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Medical Visits -->
+        <h2>Medical Visits</h2>
+        <canvas id="visitTimeline"></canvas>
+
+        <!-- Transplant Status -->
+        <h2>Transplant Status</h2>
+        {% if patient.transplant %}
+            <p class="alert-box">✅ Kidney Transplant Completed</p>
+        {% else %}
+            <p class="alert-box">🚨 No Kidney Transplant Recorded</p>
+        {% endif %}
+
+        <!-- Chatbot -->
+        <div id="chat-container">
+            <div id="chat-header">💬 AI Medical Assistant</div>
+            <div id="chat-messages"></div>
+            <input type="text" id="chat-input" placeholder="Ask about lab results...">
+            <button onclick="sendMessage({{ patient.id }})">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const eGFRData = {{ patient.eGFR_trend | tojson | safe if patient.eGFR_trend else "[]" }};
+        const UACRData = {{ patient.UACR_trend | tojson | safe if patient.UACR_trend else "[]" }};
+        const visitDates = {{ patient.visit_dates | tojson | safe if patient.visit_dates else "[]" }};
+    </script>
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>  <!-- ✅ Load chatbot logic from script.js -->
+    
+</body>
+</html>
