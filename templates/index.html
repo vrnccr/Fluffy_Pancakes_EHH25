@@ -16,7 +16,7 @@
         <h1 class="fade-in">Patient List</h1>
 
         <!-- Search Bar -->
-        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search by name..." onkeyup="filterPatients()">
+        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search by patient ID" onkeyup="filterPatients()">
 
         <table class="table fade-in">
             <thead>
@@ -36,6 +36,19 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <div class="pagination">
+            {% if current_page > 1 %}
+                <a href="/?page={{ current_page - 1 }}" class="btn">⬅ Previous</a>
+            {% endif %}
+
+            <span>Page {{ current_page }}</span>
+
+            {% if patients|length == limit %}
+                <a href="/?page={{ current_page + 1 }}" class="btn">Next ➡</a>
+            {% endif %}
+        </div>
+    </div> <!-
     </div>
 
 </body>

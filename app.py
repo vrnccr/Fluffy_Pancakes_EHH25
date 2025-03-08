@@ -20,18 +20,26 @@ NODE_API_URL = "http://127.0.0.1:5000"
 
 @app.route("/")
 def index():
-    """ Fetch all patients from Node.js API and render them in the UI """
+    """ Fetch paginated patients from Node.js API and render them in the UI """
+    page = request.args.get("page", 1, type=int)  # Get page from URL
+    limit = 50  # Number of patients per page
+
     try:
-        response = requests.get(f"{NODE_API_URL}/patients")  # Corrected API call
+        response = requests.get(f"{NODE_API_URL}/patients?page={page}&limit={limit}")
         if response.status_code == 200:
-            patients = response.json()
+            data = response.json()
+            patients = data["patients"]
+            current_page = data["currentPage"]
         else:
             patients = []
+            current_page = 1
     except Exception as e:
         print(f"Error fetching patients: {e}")
         patients = []
-        
-    return render_template("index.html", patients=patients)
+        current_page = 1
+
+    return render_template("index.html", patients=patients, current_page=current_page, limit=limit)
+
 
 @app.route("/patient/<int:patient_id>")
 def patient_detail(patient_id):
