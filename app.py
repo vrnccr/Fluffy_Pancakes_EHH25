@@ -1,0 +1,128 @@
+from flask import Flask, request, jsonify, render_template
+from datetime import datetime, timedelta
+import openai
+import chromadb
+from openai import OpenAI
+import os
+from dotenv import load_dotenv  
+
+
+app = Flask(__name__)
+
+# Initialize ChromaDB for Vector Search
+chroma_client = chromadb.PersistentClient(path="chroma_db")
+
+# OpenAI API Key (Replace with actual key)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Mock patient data
+patients = [
+    {
+        "id": 1,
+        "name": "John Doe",
+        "age": 58,
+        "eGFR_trend": [85, 76, 65, 54, 45, 30],  # Example values over time
+        "UACR_trend": [10, 15, 30, 80, 120, 250],  # Proteinuria indicator
+        "medications": ["Losartan", "Metformin", "Furosemide"],
+        "transplant": False,
+        "visit_dates": [datetime.today() - timedelta(days=i * 180) for i in range(6)],  # Every 6 months
+    },
+    {
+        "id": 2,
+        "name": "Jane Smith",
+        "age": 45,
+        "eGFR_trend": [90, 85, 80, 75, 70, 65],  # Example values over time
+        "UACR_trend": [5, 10, 15, 20, 25, 30],  # Proteinuria indicator
+        "medications": ["Lisinopril", "Amlodipine"],
+        "transplant": False,
+        "visit_dates": [datetime.today() - timedelta(days=i * 180) for i in range(6)],  # Every 6 months
+    },
+    {
+        "id": 3,
+        "name": "Alice Johnson",
+        "age": 62,
+        "eGFR_trend": [70, 65, 60, 55, 50, 45],  # Example values over time
+        "UACR_trend": [20, 25, 30, 35, 40, 45],  # Proteinuria indicator
+        "medications": ["Atorvastatin", "Hydrochlorothiazide"],
+        "transplant": True,
+        "visit_dates": [datetime.today() - timedelta(days=i * 180) for i in range(6)],  # Every 6 months
+    }
+]
+
+@app.route("/")
+def index():
+    return render_template("index.html", patients=patients)
+
+@app.route("/patient/<int:patient_id>")
+def patient_detail(patient_id):
+    patient = next((p for p in patients if p["id"] == patient_id), None)
+    if not patient:
+        return "Patient not found", 404
+    return render_template("patient.html", patient=patient)
+
+# Store conversation history per session (or use a database for persistence)
+conversation_history = {}
+
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    data = request.json
+    query = data.get("query")
+    patient_id = int(data.get("patient_id"))
+
+    client = OpenAI(api_key=OPENAI_API_KEY)
+
+    # Find the patient in the list
+    patient = next((p for p in patients if p["id"] == patient_id), None)
+    if not patient:
+        return jsonify({"response": "Patient not found."})
+
+    # Format visit dates
+    visit_dates_formatted = ', '.join(date.strftime("%Y-%m-%d") for date in patient['visit_dates'])
+
+    # Construct patient context
+    context = f"""
+        Patient Name: {patient['name']}
+        Age: {patient['age']}
+        eGFR Trend: {patient['eGFR_trend']}
+        UACR Trend: {patient['UACR_trend']}
+        Medications: {', '.join(patient['medications'])}
+        Transplant Status: {'Completed' if patient['transplant'] else 'Not Completed'}
+        Visit Dates: {visit_dates_formatted}
+        """
+
+    # Maintain conversation history
+    if patient_id not in conversation_history:
+        conversation_history[patient_id] = [
+            {"role": "system", "content": f"You are an AI doctor assistant. Here is the patient's data:\n{context}"}
+        ]
+
+    # Append user query
+    conversation_history[patient_id].append({"role": "user", "content": query})
+
+    try:
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=conversation_history[patient_id],
+            temperature=0.7,
+            max_tokens=400,  # Increased max_tokens to avoid cutoff
+        )
+
+        # Extract assistant response and preserve formatting
+        assistant_reply = response.choices[0].message.content.strip()
+
+        # Ensure AI-generated line breaks are properly displayed
+        formatted_reply = assistant_reply.replace("\n", "<br>")
+
+        # Store in conversation history
+        conversation_history[patient_id].append({"role": "assistant", "content": assistant_reply})
+
+        return jsonify({"response": formatted_reply})
+
+    except Exception as e:
+        return jsonify({"response": f"An error occurred: {str(e)}"})
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
