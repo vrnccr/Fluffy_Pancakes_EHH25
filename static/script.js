@@ -79,3 +79,39 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const chatbot = document.getElementById("chatbot-container");
+    const chatHeader = document.getElementById("chatbot-header");
+    const chatMessages = document.getElementById("chat-messages");
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    // Get the patient ID from the dataset
+    const patientId = document.body.getAttribute("data-patient-id");
+
+    // Show chatbot when clicking header
+    chatHeader.addEventListener("click", () => {
+        chatbot.style.display = chatbot.style.display === "none" ? "flex" : "none";
+    });
+
+    // Send query to backend
+    sendBtn.addEventListener("click", async () => {
+        const userMessage = chatInput.value.trim();
+        if (userMessage === "") return;
+
+        // Display user message
+        chatMessages.innerHTML += `<div><strong>You:</strong> ${userMessage}</div>`;
+        chatInput.value = "";
+
+        // Fetch response from Flask backend
+        const response = await fetch("/chatbot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: userMessage, patient_id: patientId })
+        });
+
+        const data = await response.json();
+        chatMessages.innerHTML += `<div><strong>AI:</strong> ${data.response}</div>`;
+    });
+});

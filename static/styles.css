@@ -136,3 +136,70 @@ h1, h2, h3 {
     border-color: var(--primary-red);
     box-shadow: 0px 0px 5px rgba(183, 28, 28, 0.5);
 }
+
+/* Chatbot Styling */
+#chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    background: var(--background-white);
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    /* display: none; */
+    flex-direction: column;
+}
+
+#chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#chatbot-header {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    text-align: center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+#chatbot-body {
+    padding: 10px;
+    height: calc(100% - 50px);
+}
+
+#chat-messages {
+    height: calc(100% - 50px);
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+#chat-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#send-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#send-btn:hover {
+    background-color: #0056b3;
+}

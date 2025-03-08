@@ -6,7 +6,7 @@
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body data-patient-id="{{ patient.id }}">
 
     <div class="navbar">
         <a href="/">Back to Patients</a>
@@ -44,6 +44,17 @@
             <p class="alert-box">🚨 No Kidney Transplant Recorded</p>
         {% endif %}
     </div>
+
+    <!-- Chatbot -->
+    <div id="chatbot-container">
+        <div id="chatbot-header">💬 Ask AI</div>
+        <div id="chatbot-body">
+            <div id="chat-messages"></div>
+            <input type="text" id="chat-input" placeholder="Ask about reports, labs..." />
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
 
     <script>
         const eGFRData = {{ patient.eGFR_trend | tojson }};
