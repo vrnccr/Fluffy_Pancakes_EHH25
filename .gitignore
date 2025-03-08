@@ -1,1 +1,3 @@
-CKD_train.db
+# Ignore database files
+/CKD_train_unlocked.db
+/CKD_train.db
