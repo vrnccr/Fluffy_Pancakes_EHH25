@@ -265,3 +265,32 @@ h1, h2, h3 {
     cursor: pointer;
     float: right;
 }
+
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+.pagination a {
+    text-decoration: none;
+    background-color: #b30000; /* Dark Red */
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin: 5px;
+    display: inline-block;
+    font-weight: bold;
+    transition: background 0.3s ease-in-out;
+}
+
+.pagination a:hover {
+    background-color: #ff3333; /* Lighter red on hover */
+}
+
+.pagination span {
+    font-weight: bold;
+    padding: 10px 15px;
+    display: inline-block;
+}
+

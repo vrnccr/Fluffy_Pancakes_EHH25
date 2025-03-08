@@ -138,5 +138,25 @@ function toggleChatbot() {
     }
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+    const paginationButtons = document.querySelectorAll(".pagination a");
+
+    paginationButtons.forEach(button => {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            const url = this.getAttribute("href");
+
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    document.body.innerHTML = html;
+                    history.pushState(null, "", url);
+                })
+                .catch(error => console.error("Pagination Error:", error));
+        });
+    });
+});
+
+
 
 

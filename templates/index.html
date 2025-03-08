@@ -16,25 +16,39 @@
         <h1 class="fade-in">Patient List</h1>
 
         <!-- Search Bar -->
-        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search by name..." onkeyup="filterPatients()">
+        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search by patient ID" onkeyup="filterPatients()">
 
         <table class="table fade-in">
             <thead>
-                <tr><th>Name</th><th>Age</th><th>Risk Level</th><th>Details</th></tr>
+                <tr><th>Patient ID</th><th>Age</th><th>Gender</th><th>Risk Level</th><th>Details</th></tr>
             </thead>
             <tbody id="patientTable">
                 {% for patient in patients %}
                 <tr class="patient-row">
-                    <td>{{ patient.name }}</td>
+                    <td>{{ patient.Patient }}</td>
                     <td>{{ patient.age }}</td>
+                    <td>{{ patient.sex }}</td>
                     <td class="{% if patient.risk == 'High' %}text-warning{% elif patient.risk == 'Very High' %}text-danger{% else %}text-success{% endif %}">
-                        {{ patient.risk }}
+                        {{ patient.risk_category }}
                     </td>
                     <td><a href="/patient/{{ patient.id }}" class="btn btn-primary">View</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <div class="pagination">
+            {% if current_page > 1 %}
+                <a href="/?page={{ current_page - 1 }}" class="btn">⬅ Previous</a>
+            {% endif %}
+
+            <span>Page {{ current_page }}</span>
+
+            {% if patients|length == limit %}
+                <a href="/?page={{ current_page + 1 }}" class="btn">Next ➡</a>
+            {% endif %}
+        </div>
+    </div> <!-
     </div>
 
 </body>
