@@ -3,3 +3,4 @@
 /CKD_train.db
 /.env
 /static/node_modules
+/CKD_train_unlocked.db
