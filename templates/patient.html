@@ -1,45 +1,172 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ patient.name }} - CKD Risk</title>
+    <title>{{ patient.patient_id }} - CKD Risk</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body data-patient-id="{{ patient.id }}">
+<body data-patient-id="{{ patient.Patient }}">
 
     <div class="navbar">
         <a href="/">Back to Patients</a>
     </div>
 
     <div class="container fade-in">
-        <h1>{{ patient.name }}</h1>
+        <h1><strong>ID:</strong> {{ patient.patient_id }}</h1>
         <p><strong>Age:</strong> {{ patient.age }}</p>
+        <p><strong>Gender:</strong> {{ patient.gender }}</p>
 
         <!-- Kidney Function Graph -->
         <h2>Kidney Function Over Time (eGFR)</h2>
         <canvas id="eGFRChart"></canvas>
 
+        <script>
+            // Parse eGFR Data from Flask/Jinja
+            const eGFRData = {{ patient.eGFR_results | tojson | safe }};
+        
+            console.log("Debugging: eGFR Data:", eGFRData);
+        
+            if (!Array.isArray(eGFRData) || eGFRData.length === 0) {
+                console.error('No eGFR data available');
+            } else {
+                console.log("Data found! Rendering Chart...");
+        
+                const eGFRValues = eGFRData.map(entry => entry.value);
+                const eGFRDates = eGFRData.map(entry => entry.date);
+        
+                eGFRValues.reverse();
+                eGFRDates.reverse();
+
+                const ctx = document.getElementById("eGFRChart").getContext("2d");
+                new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: eGFRDates,
+                        datasets: [{
+                            label: "eGFR Over Time",
+                            data: eGFRValues,
+                            borderColor: "red",
+                            borderWidth: 2,
+                            pointRadius: 5,
+                            fill: false,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: { display: true, text: "Date" },
+                                type: "category", // Change this to "time" if using real date formats
+                                ticks: { autoSkip: true, maxTicksLimit: 10 }
+                            },
+                            y: {
+                                title: { display: true, text: "eGFR Value" },
+                                suggestedMin: 0,
+                                suggestedMax: 120
+                            }
+                        }
+                    }
+                });
+            }
+        </script>
+        
+
+
         <!-- UACR Trend -->
         <h2>Proteinuria (UACR) Levels</h2>
         <canvas id="UACRChart"></canvas>
 
-        <!-- Medications -->
-        <h2>Medications</h2>
-        <ul>
-            {% for med in patient.medications %}
-                <li class="alert-box">💊 {{ med }}</li>
-            {% endfor %}
-        </ul>
+        <script>
+            console.log("Raw UACR Data:", '{{ patient.uACR_results | tojson | safe }}'); // Debugging
 
-        <!-- Medical Visits -->
+            // 🔹 Fetch UACR values from Flask/Jinja context
+            const uACRData = JSON.parse('{{ patient.uACR_results | tojson | safe }}');
+
+            let uACRValues = [];
+            let uACRDates = [];
+            let uACRCategories = [];
+
+            if (Array.isArray(uACRData) && uACRData.length > 0) {
+                console.log("UACR data found! Rendering Chart...");
+
+                // 🔹 Extract values and dates
+                uACRValues = uACRData.map(entry => entry.value);
+                uACRDates = uACRData.map(entry => entry.date);
+                uACRCategories = uACRData.map(entry => entry.category);
+
+                // 🔹 Define colors based on risk categories
+                var categoryColors = uACRCategories.map(category => {
+                    if (category.includes("A1")) return "green";   // Normal
+                    if (category.includes("A2")) return "orange";  // Moderate
+                    if (category.includes("A3")) return "red";     // Severe
+                    return "gray";  // Default color
+                });
+
+            } else {
+                console.warn('No UACR data available. Displaying empty chart.');
+                uACRValues = [null];  // Empty dataset
+                uACRDates = [""];
+                categoryColors = ["gray"];  // Default color
+            }
+
+            // 🔹 Render Chart.js Graph (Always Render, Even if Empty)
+            const ctxUACR = document.getElementById("UACRChart").getContext("2d");
+            new Chart(ctxUACR, {
+                type: "line",
+                data: {
+                    labels: uACRDates,
+                    datasets: [{
+                        label: uACRData.length > 0 ? "UACR Levels Over Time" : "No Data Available",
+                        data: uACRValues,
+                        borderColor: categoryColors, // Dynamic colors
+                        borderWidth: 2,
+                        pointRadius: 5,
+                        pointBackgroundColor: categoryColors,
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: { display: true, text: "Date" },
+                            type: "category",
+                            ticks: { autoSkip: true, maxTicksLimit: 10 }
+                        },
+                        y: {
+                            title: { display: true, text: "UACR (mg/g)" },
+                            suggestedMin: 0,
+                            suggestedMax: 50
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: uACRData.length === 0 ? [{
+                                type: 'label',
+                                content: 'No Data Available',
+                                position: { x: '50%', y: '50%' }
+                            }] : []
+                        }
+                    }
+                }
+            });
+        </script>
+
+
+
+        <!-- Medical Visits
         <h2>Medical Visits</h2>
-        <canvas id="visitTimeline"></canvas>
+        <canvas id="visitTimeline"></canvas> -->
 
         <!-- Transplant Status -->
         <h2>Transplant Status</h2>
-        {% if patient.transplant %}
+        {% if patient.transplanted_organ %}
             <p class="alert-box">✅ Kidney Transplant Completed</p>
+            <p><strong>Transplanted Organ:</strong> {{ patient.transplanted_organ }}</p>
+            <p><strong>Transplantation Date:</strong> {{ patient.transplanted_date }}</p>
         {% else %}
             <p class="alert-box">🚨 No Kidney Transplant Recorded</p>
         {% endif %}
@@ -62,14 +189,6 @@
             <button id="send-btn" onclick="sendMessage()">Send</button>
         </div>
     </div>
-
-
-
-    <script>
-        const eGFRData = {{ patient.eGFR_trend | tojson }};
-        const UACRData = {{ patient.UACR_trend | tojson }};
-        const visitDates = {{ patient.visit_dates | tojson }};
-    </script>
 
 </body>
 </html>

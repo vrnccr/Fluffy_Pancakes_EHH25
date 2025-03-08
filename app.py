@@ -44,17 +44,23 @@ def index():
 @app.route("/patient/<int:patient_id>")
 def patient_detail(patient_id):
     """ Fetch a specific patient's details from the Node.js API """
+    patient = {}  # 🔹 Ensure `patient` is always defined
+
     try:
-        response = requests.get(f"{NODE_API_URL}/patient/{patient_id}")  # Corrected API call
+        response = requests.get(f"{NODE_API_URL}/patient/{patient_id}")
+
         if response.status_code == 200:
             patient = response.json()
+
         else:
             return "Patient not found", 404
+
     except Exception as e:
         print(f"Error fetching patient details: {e}")
         return "Internal Server Error", 500
 
     return render_template("patient.html", patient=patient)
+
 
 # Store conversation history per session (or use a database for persistence)
 conversation_history = {}

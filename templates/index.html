@@ -31,7 +31,7 @@
                     <td class="{% if patient.risk == 'High' %}text-warning{% elif patient.risk == 'Very High' %}text-danger{% else %}text-success{% endif %}">
                         {{ patient.risk_category }}
                     </td>
-                    <td><a href="/patient/{{ patient.id }}" class="btn btn-primary">View</a></td>
+                    <td><a href="/patient/{{ patient.Patient }}" class="btn btn-primary">View</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
