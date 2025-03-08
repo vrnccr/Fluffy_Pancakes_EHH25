@@ -1,63 +1,51 @@
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime, timedelta
-import openai
-import chromadb
 from openai import OpenAI
+import chromadb
+import requests
 import os
 from dotenv import load_dotenv  
-
 
 app = Flask(__name__)
 
 # Initialize ChromaDB for Vector Search
 chroma_client = chromadb.PersistentClient(path="chroma_db")
 
-# OpenAI API Key (Replace with actual key)
+# Load OpenAI API Key securely
+load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Mock patient data
-patients = [
-    {
-        "id": 1,
-        "name": "John Doe",
-        "age": 58,
-        "eGFR_trend": [85, 76, 65, 54, 45, 30],  # Example values over time
-        "UACR_trend": [10, 15, 30, 80, 120, 250],  # Proteinuria indicator
-        "medications": ["Losartan", "Metformin", "Furosemide"],
-        "transplant": False,
-        "visit_dates": [datetime.today() - timedelta(days=i * 180) for i in range(6)],  # Every 6 months
-    },
-    {
-        "id": 2,
-        "name": "Jane Smith",
-        "age": 45,
-        "eGFR_trend": [90, 85, 80, 75, 70, 65],  # Example values over time
-        "UACR_trend": [5, 10, 15, 20, 25, 30],  # Proteinuria indicator
-        "medications": ["Lisinopril", "Amlodipine"],
-        "transplant": False,
-        "visit_dates": [datetime.today() - timedelta(days=i * 180) for i in range(6)],  # Every 6 months
-    },
-    {
-        "id": 3,
-        "name": "Alice Johnson",
-        "age": 62,
-        "eGFR_trend": [70, 65, 60, 55, 50, 45],  # Example values over time
-        "UACR_trend": [20, 25, 30, 35, 40, 45],  # Proteinuria indicator
-        "medications": ["Atorvastatin", "Hydrochlorothiazide"],
-        "transplant": True,
-        "visit_dates": [datetime.today() - timedelta(days=i * 180) for i in range(6)],  # Every 6 months
-    }
-]
+# Node.js API URL (ensure your Node.js API is running)
+NODE_API_URL = "http://127.0.0.1:5000"
 
 @app.route("/")
 def index():
+    """ Fetch all patients from Node.js API and render them in the UI """
+    try:
+        response = requests.get(f"{NODE_API_URL}/patients")  # Corrected API call
+        if response.status_code == 200:
+            patients = response.json()
+        else:
+            patients = []
+    except Exception as e:
+        print(f"Error fetching patients: {e}")
+        patients = []
+        
     return render_template("index.html", patients=patients)
 
 @app.route("/patient/<int:patient_id>")
 def patient_detail(patient_id):
-    patient = next((p for p in patients if p["id"] == patient_id), None)
-    if not patient:
-        return "Patient not found", 404
+    """ Fetch a specific patient's details from the Node.js API """
+    try:
+        response = requests.get(f"{NODE_API_URL}/patient/{patient_id}")  # Corrected API call
+        if response.status_code == 200:
+            patient = response.json()
+        else:
+            return "Patient not found", 404
+    except Exception as e:
+        print(f"Error fetching patient details: {e}")
+        return "Internal Server Error", 500
+
     return render_template("patient.html", patient=patient)
 
 # Store conversation history per session (or use a database for persistence)
@@ -65,30 +53,36 @@ conversation_history = {}
 
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
+    """ Chatbot endpoint that retrieves patient data and interacts with OpenAI """
     data = request.json
     query = data.get("query")
     patient_id = int(data.get("patient_id"))
 
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    # Fetch patient details from the Node.js API
+    try:
+        response = requests.get(f"{NODE_API_URL}/patient/{patient_id}")
+        if response.status_code != 200:
+            return jsonify({"response": "Patient not found."})
 
-    # Find the patient in the list
-    patient = next((p for p in patients if p["id"] == patient_id), None)
-    if not patient:
-        return jsonify({"response": "Patient not found."})
+        patient = response.json()
+    except Exception as e:
+        return jsonify({"response": f"Error fetching patient details: {e}"})
 
     # Format visit dates
-    visit_dates_formatted = ', '.join(date.strftime("%Y-%m-%d") for date in patient['visit_dates'])
+    visit_dates_formatted = ', '.join(date.strftime("%Y-%m-%d") for date in patient.get('visit_dates', []))
 
     # Construct patient context
     context = f"""
-        Patient Name: {patient['name']}
-        Age: {patient['age']}
-        eGFR Trend: {patient['eGFR_trend']}
-        UACR Trend: {patient['UACR_trend']}
-        Medications: {', '.join(patient['medications'])}
-        Transplant Status: {'Completed' if patient['transplant'] else 'Not Completed'}
+        Patient Name: {patient.get('name', 'N/A')}
+        Age: {patient.get('age', 'N/A')}
+        eGFR Result: {patient.get('eGFR_result', 'N/A')}
+        eGFR Trend: {patient.get('eGFR_trend', [])}
+        UACR Result: {patient.get('uACR_result', 'N/A')}
+        UACR Trend: {patient.get('UACR_trend', [])}
+        Medications: {', '.join(patient.get('medications', []))}
+        Transplant Status: {patient.get('transplanted_organ', 'None')}
         Visit Dates: {visit_dates_formatted}
-        """
+    """
 
     # Maintain conversation history
     if patient_id not in conversation_history:
@@ -101,6 +95,7 @@ def chatbot():
 
     try:
         # Call OpenAI API
+        client = OpenAI(api_key=OPENAI_API_KEY)
         response = client.chat.completions.create(
             model="gpt-4",
             messages=conversation_history[patient_id],
@@ -108,10 +103,8 @@ def chatbot():
             max_tokens=400,  # Increased max_tokens to avoid cutoff
         )
 
-        # Extract assistant response and preserve formatting
+        # Extract assistant response
         assistant_reply = response.choices[0].message.content.strip()
-
-        # Ensure AI-generated line breaks are properly displayed
         formatted_reply = assistant_reply.replace("\n", "<br>")
 
         # Store in conversation history
@@ -122,7 +115,5 @@ def chatbot():
     except Exception as e:
         return jsonify({"response": f"An error occurred: {str(e)}"})
 
-
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port=5001, debug=True)  # Run Flask on port 5001 to avoid conflict with Node.js

@@ -20,15 +20,16 @@
 
         <table class="table fade-in">
             <thead>
-                <tr><th>Name</th><th>Age</th><th>Risk Level</th><th>Details</th></tr>
+                <tr><th>Patient ID</th><th>Age</th><th>Gender</th><th>Risk Level</th><th>Details</th></tr>
             </thead>
             <tbody id="patientTable">
                 {% for patient in patients %}
                 <tr class="patient-row">
-                    <td>{{ patient.name }}</td>
+                    <td>{{ patient.Patient }}</td>
                     <td>{{ patient.age }}</td>
+                    <td>{{ patient.sex }}</td>
                     <td class="{% if patient.risk == 'High' %}text-warning{% elif patient.risk == 'Very High' %}text-danger{% else %}text-success{% endif %}">
-                        {{ patient.risk }}
+                        {{ patient.risk_category }}
                     </td>
                     <td><a href="/patient/{{ patient.id }}" class="btn btn-primary">View</a></td>
                 </tr>
