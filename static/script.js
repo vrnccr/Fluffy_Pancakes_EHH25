@@ -115,3 +115,28 @@ document.addEventListener("DOMContentLoaded", function () {
         chatMessages.innerHTML += `<div><strong>AI:</strong> ${data.response}</div>`;
     });
 });
+
+
+function toggleChatbot() {
+    var chatbot = document.getElementById("chatbot-container");
+    var toggleBtn = document.getElementById("chatbot-toggle");
+
+    if (chatbot.style.display === "none" || chatbot.style.opacity === "0") {
+        chatbot.style.display = "flex";
+        setTimeout(() => {
+            chatbot.style.opacity = "1";
+            chatbot.style.transform = "translateY(0)";
+        }, 10); // Smooth animation
+        toggleBtn.style.display = "none"; // Hide button when chatbot is open
+    } else {
+        chatbot.style.opacity = "0";
+        chatbot.style.transform = "translateY(20px)";
+        setTimeout(() => {
+            chatbot.style.display = "none"; // Hide after animation
+        }, 300);
+        toggleBtn.style.display = "block"; // Show button when chatbot is closed
+    }
+}
+
+
+

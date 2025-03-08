@@ -45,15 +45,24 @@
         {% endif %}
     </div>
 
-    <!-- Chatbot -->
-    <div id="chatbot-container">
-        <div id="chatbot-header">💬 Ask AI</div>
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbot-toggle" onclick="toggleChatbot()">💬 Chat</button>
+
+    <!-- Chatbot Container -->
+    <div id="chatbot-container" style="display: none;">
+        <div id="chatbot-header">
+            <span>💬 Ask AI</span>
+            <button id="close-chatbot" onclick="toggleChatbot()">✖</button>
+        </div>
         <div id="chatbot-body">
             <div id="chat-messages"></div>
-            <input type="text" id="chat-input" placeholder="Ask about reports, labs..." />
-            <button id="send-btn">Send</button>
+        </div>
+        <div id="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Ask about reports, labs...">
+            <button id="send-btn" onclick="sendMessage()">Send</button>
         </div>
     </div>
+
 
 
     <script>

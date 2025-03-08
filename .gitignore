@@ -1,3 +1,4 @@
 # Ignore database files
 /CKD_train_unlocked.db
 /CKD_train.db
+/.env
