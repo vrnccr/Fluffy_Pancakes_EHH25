@@ -14,6 +14,7 @@ chroma_client = chromadb.PersistentClient(path="chroma_db")
 # Load OpenAI API Key securely
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Node.js API URL (ensure your Node.js API is running)
 NODE_API_URL = "http://127.0.0.1:5000"
@@ -70,41 +71,48 @@ conversation_history = {}
 
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
-    """ Simple ChatGPT-like assistant """
+    """ Chatbot that provides insights based on patient data. """
     data = request.json
+    print(data)
     query = data.get("query")
-    
+    patient_id = data.get("patient_id")
+    eGFR_results = data.get("eGFR_results", [])
+    uACR_results = data.get("uACR_results", [])
+    recommendations = data.get("recommendations", [])
+
     if not query:
         return jsonify({"response": "Please provide a message."})
-    
-    # Maintain conversation history
-    user_id = "default_user"  # Replace with session/user ID if needed
-    if user_id not in conversation_history:
-        conversation_history[user_id] = []
 
-    # Append user query
-    conversation_history[user_id].append({"role": "user", "content": query})
+    # ✅ Build patient-specific prompt
+    prompt = f"""
+    Patient ID: {patient_id}
+    eGFR History:
+    {eGFR_results}
+
+    UACR History:
+    {uACR_results}
+
+    Recommendations:
+    {recommendations}
+
+    Question: {query}
+    Answer:
+    """
 
     try:
-        # Call OpenAI API
-        client = OpenAI(api_key=OPENAI_API_KEY)
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=conversation_history[user_id],
+            messages=[{"role": "system", "content": prompt}],
             temperature=0.7,
             max_tokens=400
         )
 
-        # Extract assistant response
         assistant_reply = response.choices[0].message.content.strip()
-
-        # Store response in conversation history
-        conversation_history[user_id].append({"role": "assistant", "content": assistant_reply})
-
         return jsonify({"response": assistant_reply})
 
     except Exception as e:
         return jsonify({"response": f"An error occurred: {str(e)}"})
+
 
 if __name__ == "__main__":
     app.run(port=5001, debug=True)  # Run Flask on port 5001 to avoid conflict with Node.js

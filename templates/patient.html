@@ -4,9 +4,10 @@
     <title>{{ patient.patient_id }} - CKD Risk</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='endpoint.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body data-patient-id="{{ patient.Patient }}">
+<body data-patient-id="{{ patient.patient_id }}">
 
     <div class="navbar">
         <a href="/">Back to Patients</a>
@@ -19,7 +20,9 @@
 
         <!-- Kidney Function Graph -->
         <h2>Kidney Function Over Time (eGFR)</h2>
-        <canvas id="eGFRChart"></canvas>
+        <!--<canvas id="eGFRChart"></canvas>-->
+        <canvas id="eGFRChart" data-egfr-results='{{ patient.eGFR_results | tojson | safe }}'></canvas>
+
 
         <script>
             // Parse eGFR Data from Flask/Jinja
@@ -76,7 +79,9 @@
 
         <!-- UACR Trend -->
         <h2>Proteinuria (UACR) Levels</h2>
-        <canvas id="UACRChart"></canvas>
+        <!--<canvas id="UACRChart"></canvas>-->
+        <canvas id="UACRChart" data-uacr-results='{{ patient.uACR_results | tojson | safe }}'></canvas>
+
 
         <script>
             console.log("Raw UACR Data:", '{{ patient.uACR_results | tojson | safe }}'); // Debugging
@@ -89,9 +94,12 @@
             let uACRCategories = [];
 
             if (Array.isArray(uACRData) && uACRData.length > 0) {
-                console.log("UACR data found! Rendering Chart...");
+                console.log("UACR data found! Sorting and Rendering Chart...");
 
-                // 🔹 Extract values and dates
+                // ✅ **Sort data by date (oldest first)**
+                uACRData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                // 🔹 Extract values and dates **after sorting**
                 uACRValues = uACRData.map(entry => entry.value);
                 uACRDates = uACRData.map(entry => entry.date);
                 uACRCategories = uACRData.map(entry => entry.category);
@@ -153,11 +161,12 @@
                     }
                 }
             });
+
         </script>
-        
+
 
         <h2>🛠️ Recommended Tests</h2>
-        <ul id="recommendations">
+        <ul id="recommendations" data-recommendations='{{ patient.recommendations | tojson | safe }}'>
             {% if patient.recommendations and patient.recommendations|length > 0 %}
                 {% for rec in patient.recommendations %}
                     <li>{{ rec }}</li>

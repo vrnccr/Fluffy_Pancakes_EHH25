@@ -87,37 +87,75 @@ document.addEventListener("DOMContentLoaded", function () {
     const chatInput = document.getElementById("chat-input");
     const sendBtn = document.getElementById("send-btn");
 
-    // Get the patient ID from the dataset
+    // ✅ Get patient data directly from the HTML dataset
     const patientId = document.body.getAttribute("data-patient-id");
 
-    // Show chatbot when clicking header
+    // ✅ Ensure elements exist before parsing JSON
+    const eGFRChart = document.getElementById("eGFRChart");
+    const uACRChart = document.getElementById("UACRChart");
+    const recommendationsDiv = document.getElementById("recommendations");
+
+    const eGFRData = eGFRChart ? JSON.parse(eGFRChart.getAttribute("data-egfr-results") || "[]") : [];
+    const uACRData = uACRChart ? JSON.parse(uACRChart.getAttribute("data-uacr-results") || "[]") : [];
+    const recommendations = recommendationsDiv ? JSON.parse(recommendationsDiv.getAttribute("data-recommendations") || "[]") : [];
+
+    console.log("✅ Patient ID:", patientId);
+    console.log("✅ eGFR Data:", eGFRData);
+    console.log("✅ UACR Data:", uACRData);
+    console.log("✅ Recommendations:", recommendations);
+
+    // ✅ Show chatbot when clicking header
     chatHeader.addEventListener("click", () => {
         chatbot.style.display = chatbot.style.display === "none" ? "flex" : "none";
     });
 
-    // Send query to backend
-    sendBtn.addEventListener("click", async () => {
+    sendBtn.addEventListener("click", async function sendMessage() {
+        const chatInput = document.getElementById("chat-input");
+        const chatMessages = document.getElementById("chat-messages");
         const userMessage = chatInput.value.trim();
         if (userMessage === "") return;
 
-        // Display user message
-        chatMessages.innerHTML += `<div style="white-space: pre-line; margin-bottom: 10px;"><strong>You:</strong> ${userMessage}</div>`;
-        chatInput.value = "";
+        chatMessages.innerHTML += `<div class="chat-message user"><strong>You:</strong> ${userMessage}</div>`;
 
-        // Fetch response from Flask backend
-        const response = await fetch("/chatbot", {
+        chatInput.value = "";
+    
+        // Get Patient Data from `data-*` attributes
+        const patientId = document.body.getAttribute("data-patient-id");
+        const eGFRData = JSON.parse(document.getElementById("eGFRChart").getAttribute("data-egfr-results") || "[]");
+        const uACRData = JSON.parse(document.getElementById("UACRChart").getAttribute("data-uacr-results") || "[]");
+        const recommendations = JSON.parse(document.getElementById("recommendations").getAttribute("data-recommendations") || "[]");
+    
+        console.log("📤 Sending to chatbot:", { patientId, eGFRData, uACRData, recommendations });
+    
+        fetch("/chatbot", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: userMessage, patient_id: patientId })
-        });
+            body: JSON.stringify({
+                query: userMessage,
+                patient_id: patientId,
+                eGFR_results: eGFRData,
+                uACR_results: uACRData,
+                recommendations: recommendations
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("chat-messages").innerHTML += `<div class="chat-message ai"><strong>AI:</strong> ${data.response}</div>`;
+        })
+        .catch(error => console.error("❌ Error:", error));
+    });    
+});
 
-        const data = await response.json();
+document.addEventListener("DOMContentLoaded", function () {
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send-btn");
 
-        // Display AI response with formatting
-        chatMessages.innerHTML += `<div style="white-space: pre-line; margin-bottom: 10px;"><strong>AI:</strong> ${data.response}</div>`;
-
-        // Scroll to the latest message
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Send message when Enter is pressed
+    chatInput.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault(); // Prevent default form submission
+            sendBtn.click(); // Simulate click on "Send" button
+        }
     });
 });
 
