@@ -260,6 +260,76 @@ app.get('/patient/:id', async (req, res) => {
     }
 });
 
+
+app.get('/alerts', (req, res) => {
+    console.log('Fetching alerts...');
+    const query = `
+        WITH LatestResults AS (
+        SELECT 
+            p.patient, l.Analyte, l.ValueNumber, l.EntryDate, p.sex, 
+            strftime('%Y', 'now') - strftime('%Y', p.DateOfBirth) - 
+            (strftime('%m-%d', 'now') < strftime('%m-%d', p.DateOfBirth)) AS age
+        FROM labs l
+        LEFT JOIN patients p ON l.Patient = p.patient
+        WHERE l.EntryDate >= datetime('now', '-3 day')  -- Last 24H
+        AND (LOWER(l.Analyte) = 'ckd-epi' OR LOWER(l.Analyte) = 'uacr')
+    )
+    SELECT DISTINCT patient, sex, age, Analyte, ValueNumber, EntryDate
+    FROM LatestResults
+    ORDER BY EntryDate DESC;
+
+    `;
+
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('Database error:', err.message);
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        const alerts = rows.map(row => {
+            let riskLevel = "Low";
+            let reason = "";
+
+            if (row.Analyte.toLowerCase() === "ckd-epi") {
+                if (row.ValueNumber <= 30) {
+                    riskLevel = "Critical";
+                    reason = `eGFR is very low (${row.ValueNumber} mL/min)`;
+                } else if (row.ValueNumber <= 60) {
+                    riskLevel = "Moderate";
+                    reason = `eGFR is decreased (${row.ValueNumber} mL/min)`;
+                }
+            }
+
+            if (row.Analyte.toLowerCase() === "uacr") {
+                if (row.ValueNumber > 300) {
+                    riskLevel = "Critical";
+                    reason = `UACR is severely elevated (${row.ValueNumber} mg/g)`;
+                } else if (row.ValueNumber > 30) {
+                    riskLevel = "Moderate";
+                    reason = `UACR is moderately elevated (${row.ValueNumber} mg/g)`;
+                }
+            }
+
+            return {
+                patient_id: row.patient,
+                age: row.age,
+                gender: row.sex === "M" ? "Male" : "Female",
+                analyte: row.Analyte,
+                value: row.ValueNumber,
+                entry_date: row.EntryDate,
+                risk_level: riskLevel,
+                reason: reason
+            };
+        }).filter(alert => alert.risk_level !== "Low"); // Exclude low-risk patients
+
+        res.json(alerts);
+    });
+});
+
+
+
+
+
 // ✅ Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://127.0.0.1:${PORT}`);

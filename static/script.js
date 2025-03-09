@@ -156,3 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchAlerts();  // ✅ Fetch alerts when the homepage loads
+});

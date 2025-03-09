@@ -13,6 +13,66 @@
     </div>
 
     <div class="container">
+        <h2 class="alert-heading">⚠️ Recent Alerts (Last 24H)</h2>
+        <table class="alert-table">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Analyte</th>
+                    <th>Value</th>
+                    <th>Risk Level</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="alertsTable">
+                <!-- Alerts will be injected here -->
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        console.log("🚀 Fetching alerts...");
+
+        fetch("http://127.0.0.1:5000/alerts")
+            .then(response => response.json())
+            .then(alerts => {
+                console.log("📊 Alerts Data Received:", alerts);
+
+                const alertsTable = document.getElementById("alertsTable");
+                alertsTable.innerHTML = ""; // ✅ Clear table before inserting new rows
+
+                if (alerts.length === 0) {
+                    alertsTable.innerHTML = "<tr><td colspan='7'>✅ No critical alerts in the last 24H</td></tr>";
+                    return;
+                }
+
+                alerts.forEach(alert => {
+                    const row = document.createElement("tr");
+                    row.classList.add(alert.risk_level === "Critical" ? "critical-alert" : "moderate-alert");
+
+                    row.innerHTML = `
+                        <td>${alert.age}</td>
+                        <td>${alert.gender}</td>
+                        <td>${alert.analyte}</td>
+                        <td>${alert.value}</td>
+                        <td>${alert.risk_level}</td>
+                        <td>${alert.reason}</td>
+                        <td><a href="/patient/${ alert.patient_id }" class="btn btn-primary">View</a></td>
+
+                    `;
+                    alertsTable.appendChild(row);
+                });
+
+                console.log("✅ Processed alerts displayed.");
+            })
+            .catch(error => console.error("❌ Error fetching alerts:", error));
+        });
+    </script>    
+
+    <div class="container">
         <h1 class="fade-in">Patient List</h1>
 
         <!-- Search Bar -->
