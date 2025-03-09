@@ -1,7 +1,7 @@
 Flask==2.0.3
 requests==2.26.0
 openai==0.27.0
-chromadb==0.1.0
+chromadb==0.3.26  # Last version supporting PersistentClient
 pandas==1.5.3  # Supports modern NumPy versions
 numpy==1.23.5  # Updated to support Python 3.11
 python-dotenv==0.19.2
