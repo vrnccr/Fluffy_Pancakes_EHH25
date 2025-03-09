@@ -7,3 +7,4 @@ numpy==1.23.5  # Updated to support Python 3.11
 python-dotenv==0.19.2
 gunicorn==20.1.0  # ✅ Required for Render deployment
 flask-cors==3.0.10  # ✅ If using CORS
+markupsafe==2.1.3
