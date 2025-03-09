@@ -157,11 +157,61 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(html => {
                     document.body.innerHTML = html;
                     history.pushState(null, "", url);
+
+                    // ✅ Re-run alert visibility check after updating content
+                    checkAndHideAlerts();
+                    setupPagination();
                 })
                 .catch(error => console.error("Pagination Error:", error));
         });
     });
 });
+
+// ✅ Function to check and hide alerts on non-first pages
+function checkAndHideAlerts() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = urlParams.get("page") ? parseInt(urlParams.get("page")) : 1;
+
+    console.log("📄 Current Page:", currentPage);
+
+    const alertsSection = document.getElementById("alertsSection");
+
+    if (currentPage !== 1 && alertsSection) {
+        console.log("⏳ Hiding alerts section (not on page 1)");
+        alertsSection.style.display = "none";
+    } else if (alertsSection) {
+        alertsSection.style.display = "block"; // Ensure alerts show on page 1
+    }
+}
+
+// ✅ Function to reinitialize pagination event listeners after page change
+function setupPagination() {
+    const paginationButtons = document.querySelectorAll(".pagination a");
+
+    paginationButtons.forEach(button => {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            const url = this.getAttribute("href");
+
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    document.body.innerHTML = html;
+                    history.pushState(null, "", url);
+
+                    // ✅ Re-run functions after pagination update
+                    checkAndHideAlerts();
+                    setupPagination();
+                })
+                .catch(error => console.error("Pagination Error:", error));
+        });
+    });
+}
+
+// ✅ Initial check when the page first loads
+checkAndHideAlerts();
+setupPagination();
+
 
 document.addEventListener("DOMContentLoaded", () => {
     fetchAlerts();  // ✅ Fetch alerts when the homepage loads

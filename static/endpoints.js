@@ -160,11 +160,14 @@ app.get('/patient/:id', async (req, res) => {
                 reportId: row.ReportId,
                 reportType: row.ReportType,
                 report_date: row.report_date ? row.report_date.toString() : null,
-                clinic: row.Clinic
+                clinic: row.Clinic,
+                recommendations: [] // 🆕 Store recommendations here
             };
+
             try {
                 const eGFRData = await getEGRFData(patientId);
                 const sKreatininData = await getSKreatininData(patientId);
+                const uACRData = await getUACRData(patientId);
 
                 eGFRData.forEach(data => {
                     patient.eGFR_results.push({
@@ -177,12 +180,12 @@ app.get('/patient/:id', async (req, res) => {
 
                 // Compute eGFR using CKD-EPI formula if needed
                 sKreatininData.forEach(data => {
-                    let scr_micromol = data.s_kreatinin_value; // Serum Creatinine in µmol/L
-                    let scr = scr_micromol / 88.4; // Convert to mg/dL
+                    let scr_micromol = data.s_kreatinin_value;
+                    let scr = scr_micromol / 88.4;
                     let age = patient.age;
                     let gender = patient.gender;
                     let computed_eGFR = null;
-                    let category = "Unknown";  // Default
+                    let category = "Unknown";
 
                     if (gender === "Female") {
                         computed_eGFR = scr <= 0.7
@@ -197,7 +200,6 @@ app.get('/patient/:id', async (req, res) => {
                     if (computed_eGFR) {
                         computed_eGFR = parseFloat(computed_eGFR.toFixed(2));
 
-                        // ✅ Categorize based on KDIGO guidelines
                         if (computed_eGFR >= 90) {
                             category = "G1 (Normal)";
                         } else if (computed_eGFR >= 60) {
@@ -221,8 +223,9 @@ app.get('/patient/:id', async (req, res) => {
                     }
                 });
 
-                // Sort results by date (newest first)
-                const uACRData = await getUACRData(patientId);
+                // Sort eGFR results
+                patient.eGFR_results.sort((a, b) => new Date(b.date) - new Date(a.date));
+
                 uACRData.forEach(data => {
                     let uACR_value = data.uACR_value;
                     let category = "Unknown";
@@ -243,9 +246,32 @@ app.get('/patient/:id', async (req, res) => {
                     });
                 });
 
-                // Sort results by date (newest first)
-                patient.eGFR_results.sort((a, b) => new Date(b.date) - new Date(a.date));
+                // Sort uACR results
                 patient.uACR_results.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // 🛠 **Generate Recommendations**
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+                // Check if the latest eGFR test is missing or outdated
+                if (patient.eGFR_results.length === 0) {
+                    patient.recommendations.push("❗ eGFR test is missing. Consider ordering a new one.");
+                } else {
+                    const latestEGFR = new Date(patient.eGFR_results[0].date);
+                    if (latestEGFR < oneYearAgo) {
+                        patient.recommendations.push("⚠️ eGFR test is outdated (>1 year). Consider rechecking.");
+                    }
+                }
+
+                // Check if the latest uACR test is missing or outdated
+                if (patient.uACR_results.length === 0) {
+                    patient.recommendations.push("❗ uACR test is missing. Consider ordering a new one.");
+                } else {
+                    const latestUACR = new Date(patient.uACR_results[0].date);
+                    if (latestUACR < oneYearAgo) {
+                        patient.recommendations.push("⚠️ uACR test is outdated (>1 year). Consider rechecking.");
+                    }
+                }
 
                 console.log('Patient data:', patient);
                 res.json(patient);
@@ -271,13 +297,12 @@ app.get('/alerts', (req, res) => {
             (strftime('%m-%d', 'now') < strftime('%m-%d', p.DateOfBirth)) AS age
         FROM labs l
         LEFT JOIN patients p ON l.Patient = p.patient
-        WHERE l.EntryDate >= datetime('now', '-3 day')  -- Last 24H
+        WHERE l.EntryDate >= datetime('now', '-3 day')  -- Last 3 days
         AND (LOWER(l.Analyte) = 'ckd-epi' OR LOWER(l.Analyte) = 'uacr')
     )
     SELECT DISTINCT patient, sex, age, Analyte, ValueNumber, EntryDate
     FROM LatestResults
     ORDER BY EntryDate DESC;
-
     `;
 
     db.all(query, [], (err, rows) => {
@@ -290,23 +315,25 @@ app.get('/alerts', (req, res) => {
             let riskLevel = "Low";
             let reason = "";
 
+            let formattedValue = row.ValueNumber ? parseFloat(row.ValueNumber.toFixed(1)) : null; // ✅ Round to 1 decimal
+
             if (row.Analyte.toLowerCase() === "ckd-epi") {
-                if (row.ValueNumber <= 30) {
+                if (formattedValue <= 30) {
                     riskLevel = "Critical";
-                    reason = `eGFR is very low (${row.ValueNumber} mL/min)`;
-                } else if (row.ValueNumber <= 60) {
+                    reason = `eGFR is very low`;
+                } else if (formattedValue <= 60) {
                     riskLevel = "Moderate";
-                    reason = `eGFR is decreased (${row.ValueNumber} mL/min)`;
+                    reason = `eGFR is decreased`;
                 }
             }
 
             if (row.Analyte.toLowerCase() === "uacr") {
-                if (row.ValueNumber > 300) {
+                if (formattedValue > 300) {
                     riskLevel = "Critical";
-                    reason = `UACR is severely elevated (${row.ValueNumber} mg/g)`;
-                } else if (row.ValueNumber > 30) {
+                    reason = `UACR is severely elevated`;
+                } else if (formattedValue > 30) {
                     riskLevel = "Moderate";
-                    reason = `UACR is moderately elevated (${row.ValueNumber} mg/g)`;
+                    reason = `UACR is moderately elevateds`;
                 }
             }
 
@@ -315,7 +342,7 @@ app.get('/alerts', (req, res) => {
                 age: row.age,
                 gender: row.sex === "M" ? "Male" : "Female",
                 analyte: row.Analyte,
-                value: row.ValueNumber,
+                value: formattedValue,  // ✅ Rounded ValueNumber
                 entry_date: row.EntryDate,
                 risk_level: riskLevel,
                 reason: reason
@@ -325,7 +352,6 @@ app.get('/alerts', (req, res) => {
         res.json(alerts);
     });
 });
-
 
 
 

@@ -61,10 +61,6 @@ def patient_detail(patient_id):
 
     return render_template("patient.html", patient=patient)
 
-
-# Store conversation history per session (or use a database for persistence)
-conversation_history = {}
-
 # Load OpenAI API Key securely
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

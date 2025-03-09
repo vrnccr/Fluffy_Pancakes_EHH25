@@ -154,7 +154,18 @@
                 }
             });
         </script>
+        
 
+        <h2>🛠️ Recommended Tests</h2>
+        <ul id="recommendations">
+            {% if patient.recommendations and patient.recommendations|length > 0 %}
+                {% for rec in patient.recommendations %}
+                    <li>{{ rec }}</li>
+                {% endfor %}
+            {% else %}
+                <li>✅ No additional tests needed. All tests are up-to-date.</li>
+            {% endif %}
+        </ul>
 
 
         <!-- Medical Visits
