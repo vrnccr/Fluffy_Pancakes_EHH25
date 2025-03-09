@@ -108,8 +108,7 @@ Expected output:
 
 ## ❤️ Contributors
 Our amazing hackathon team who built Fluffy Pancakes:
-- [Your Team Members]
-- [GitHub Profiles]
+- Ruslan Tsibirov, Veronika Rybak, Ali Guliyev
 
 ## 🏆 Final Words
 **Fluffy Pancakes** is more than just a hackathon project. It’s a step towards improving CKD diagnosis, reducing complications, and enhancing patient care. We built an intuitive, explainable, and clinically relevant solution that empowers physicians to make better decisions—**before it's too late.**
