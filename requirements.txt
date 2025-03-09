@@ -29,3 +29,4 @@ charset-normalizer==2.1.1  # FIXED: Removed conflicting version
 idna==3.7
 frozenlist==1.4.1
 urllib3==1.26.16
+pydantic==1.10.9  # Compatible with OpenAI 0.27.0 and older dependencies
