@@ -34,3 +34,4 @@ overrides==7.7.0
 python-dateutil==2.9.0.post0
 pytz==2025.1  # ✅ Fixes 'ImportError: No module named pytz'
 six==1.17.0
+onnxruntime==1.21.0
