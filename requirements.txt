@@ -12,8 +12,17 @@ werkzeug==2.0.3
 jinja2==3.0.3
 Click==8.0.3
 itsdangerous==2.0.1
-aiohttp==3.9.3  # ✅ Fixes missing aiohttp error
-multidict==6.0.5  # ✅ Fixes 'ModuleNotFoundError: No module named multidict'
-yarl==1.9.3  # ✅ Another required dependency of aiohttp
-async-timeout==4.0.3  # ✅ Ensures aiohttp works properly
-idna-ssl==1.1.0  # ✅ Sometimes needed for aiohttp on Render
+
+# ✅ Fix aiohttp-related missing modules
+aiohttp==3.9.3
+multidict==6.0.5
+yarl==1.9.3
+async-timeout==4.0.3
+idna-ssl==1.1.0
+
+# ✅ Fix additional dependencies sometimes missing
+attrs==23.2.0  # Fixes 'ModuleNotFoundError: No module named attr'
+typing-extensions==4.12.2
+certifi==2024.2.2
+charset-normalizer==3.3.2
+idna==3.7
