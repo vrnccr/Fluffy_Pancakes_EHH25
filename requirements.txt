@@ -3,7 +3,7 @@ requests==2.26.0
 openai==0.27.0
 chromadb==0.1.0
 pandas==1.3.3
-numpy==1.21.5
+numpy==1.23.5  # Updated to support Python 3.11
 python-dotenv==0.19.2
 gunicorn==20.1.0  # ✅ Required for Render deployment
 flask-cors==3.0.10  # ✅ If using CORS
