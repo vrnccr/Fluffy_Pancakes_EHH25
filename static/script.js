@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (userMessage === "") return;
 
         // Display user message
-        chatMessages.innerHTML += `<div><strong>You:</strong> ${userMessage}</div>`;
+        chatMessages.innerHTML += `<div style="white-space: pre-line; margin-bottom: 10px;"><strong>You:</strong> ${userMessage}</div>`;
         chatInput.value = "";
 
         // Fetch response from Flask backend
@@ -112,9 +112,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         const data = await response.json();
-        chatMessages.innerHTML += `<div><strong>AI:</strong> ${data.response}</div>`;
+
+        // Display AI response with formatting
+        chatMessages.innerHTML += `<div style="white-space: pre-line; margin-bottom: 10px;"><strong>AI:</strong> ${data.response}</div>`;
+
+        // Scroll to the latest message
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     });
 });
+
 
 
 function toggleChatbot() {
