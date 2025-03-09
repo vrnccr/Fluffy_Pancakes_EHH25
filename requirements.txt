@@ -28,4 +28,5 @@ certifi==2024.2.2
 charset-normalizer==3.3.2
 idna==3.7
 frozenlist==1.4.1
-urllib3==2.2.1
+urllib3==1.26.16
+charset_normalizer==2.1.1

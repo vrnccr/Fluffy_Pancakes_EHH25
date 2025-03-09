@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime, timedelta
-from openai import OpenAI
+import openai
 import chromadb
 import requests
 import os
@@ -14,8 +14,6 @@ chroma_client = chromadb.PersistentClient(path="chroma_db")
 # Load OpenAI API Key securely
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
-
 # Node.js API URL (ensure your Node.js API is running)
 NODE_API_URL = "http://127.0.0.1:5000"
 
@@ -100,7 +98,7 @@ def chatbot():
     """
 
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{"role": "system", "content": prompt}],
             temperature=0.7,
