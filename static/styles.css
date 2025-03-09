@@ -296,7 +296,7 @@ h1, h2, h3 {
 
 
 .alert-heading {
-    color: red;
+    color: rgb(173, 48, 48);
     font-weight: bold;
     text-align: center;
     margin-bottom: 10px;
@@ -315,17 +315,17 @@ h1, h2, h3 {
 }
 
 .critical-alert {
-    background-color: #ffcccc; /* Light red */
+    background-color: #ffe0e0; /* Light red */
     color: red;
 }
 
 .moderate-alert {
-    background-color: #ffeb99; /* Light yellow */
+    background-color: #fff3c1; /* Light yellow */
     color: #d47f00;
 }
 
 .alert-table a {
     text-decoration: none;
     font-weight: bold;
-    color: blue;
+    color: white;
 }
